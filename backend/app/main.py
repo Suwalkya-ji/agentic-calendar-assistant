@@ -1,6 +1,6 @@
 from dotenv import find_dotenv, load_dotenv
 
-# .env from the directory the server is started in (backend-python/)
+# .env from the directory the server is started in (backend/)
 load_dotenv(find_dotenv(usecwd=True))
 
 import logging  # noqa: E402

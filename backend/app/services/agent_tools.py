@@ -12,7 +12,7 @@ class AgentContext:
     auth_user_id: str
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def list_upcoming_meetings(
     ctx: RunContextWrapper[AgentContext],
     max_results: int | None = None,
@@ -32,7 +32,7 @@ async def list_upcoming_meetings(
     )
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def check_calendar_busy(
     ctx: RunContextWrapper[AgentContext], start_iso: str, end_iso: str
 ) -> dict[str, Any]:
@@ -45,7 +45,7 @@ async def check_calendar_busy(
     return await calendar_service.check_calendar_busy(ctx.context.auth_user_id, start_iso, end_iso)
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def create_meeting(
     ctx: RunContextWrapper[AgentContext],
     title: str,
@@ -76,7 +76,7 @@ async def create_meeting(
     )
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def reschedule_meeting(
     ctx: RunContextWrapper[AgentContext], event_id: str, start_iso: str, end_iso: str
 ) -> dict[str, Any]:
@@ -92,7 +92,7 @@ async def reschedule_meeting(
     )
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def cancel_meeting(ctx: RunContextWrapper[AgentContext], event_id: str) -> dict[str, Any]:
     """Cancel a Google Calendar event by id and email attendees about the cancellation.
 
@@ -102,7 +102,7 @@ async def cancel_meeting(ctx: RunContextWrapper[AgentContext], event_id: str) ->
     return await calendar_service.cancel_meeting(ctx.context.auth_user_id, event_id)
 
 
-@function_tool
+@function_tool(strict_mode=False)
 async def update_working_memory(ctx: RunContextWrapper[AgentContext], content: str) -> str:
     """Replace the user's working memory (lasting meeting preferences) with updated Markdown.
 

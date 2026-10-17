@@ -1,12 +1,12 @@
-# Agentic Calendar Assistant — Python backend
+# Agentic Calendar Assistant — backend
 
-Python port of `../backend` (Node/Express). It exposes the same HTTP API, so the frontend works against either one.
+Python (FastAPI) backend, ported from the original Node/Express backend with the same HTTP API.
 
 | Node backend | Python backend |
 |---|---|
 | Express 5 | FastAPI + uvicorn |
 | `pg` | `asyncpg` |
-| Mastra agent + memory (`mastra.db`) | OpenAI Agents SDK, with history in `memory.db` (SQLite) |
+| Mastra agent + memory (`mastra.db`) | OpenAI Agents SDK running Gemini (or OpenAI), with history in `memory.db` (SQLite) |
 | `googleapis` | Google Calendar REST API through `httpx` |
 | `@descope/node-sdk` | `descope` (async client) |
 | `@descope/mcp-express` | `mcp` SDK (`MCPServer`) with a Descope token verifier |
@@ -16,10 +16,10 @@ Python port of `../backend` (Node/Express). It exposes the same HTTP API, so the
 ```bash
 docker compose up -d            # from the repo root: Postgres on localhost:5442
 
-cd backend-python
+cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # then fill in the Descope + OpenAI values
+cp .env.example .env            # then fill in the Descope values and GEMINI_API_KEY
 
 python -m scripts.migrate       # create tables
 uvicorn app.main:app --reload --port 4000
@@ -56,6 +56,11 @@ app/
   mcp/server.py              Descope-protected MCP server
 scripts/migrate.py           runs sql/*.sql in order
 ```
+
+## AI model
+
+Set `GEMINI_API_KEY` to use Google Gemini (default model `gemini-2.5-flash`; change it with `AI_MODEL`).
+If `GEMINI_API_KEY` is empty and `OPENAI_API_KEY` is set, OpenAI is used instead (default `gpt-4o-mini`).
 
 ## Differences from the Node version
 
