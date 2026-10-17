@@ -7,7 +7,7 @@ management_key = os.getenv("DESCOPE_MANAGEMENT_KEY")
 
 if not project_id:
     # The Python SDK cannot be created without a project id.
-    raise RuntimeError("DESCOPE_PROJECT_ID is not set (add it to backend-python/.env)")
+    raise RuntimeError("DESCOPE_PROJECT_ID is not set (add it to backend/.env)")
 
 descope_client = DescopeClientAsync(
     project_id=project_id,
