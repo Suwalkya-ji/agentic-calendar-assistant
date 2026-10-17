@@ -1,6 +1,6 @@
-# Agentic Calendar Assistant — Python backend
+# Agentic Calendar Assistant — backend
 
-Python port of `../backend` (Node/Express). It exposes the same HTTP API, so the frontend works against either one.
+Python (FastAPI) backend, ported from the original Node/Express backend with the same HTTP API.
 
 | Node backend | Python backend |
 |---|---|
@@ -16,7 +16,7 @@ Python port of `../backend` (Node/Express). It exposes the same HTTP API, so the
 ```bash
 docker compose up -d            # from the repo root: Postgres on localhost:5442
 
-cd backend-python
+cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # then fill in the Descope + OpenAI values
