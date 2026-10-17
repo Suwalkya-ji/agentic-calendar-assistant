@@ -2,8 +2,9 @@ import os
 from collections.abc import Awaitable, Callable
 from typing import Any, Literal, TypedDict
 
-from agents import Agent, Runner
+from agents import Agent, Model, OpenAIChatCompletionsModel, Runner, set_tracing_disabled
 from agents.items import ToolCallItem
+from openai import AsyncOpenAI
 
 from app.config import memory
 from app.config.agent_instructions import get_agent_instructions
@@ -19,8 +20,32 @@ class AgentEvent(TypedDict, total=False):
 OnEvent = Callable[[AgentEvent], Awaitable[None]]
 
 
-def model_name() -> str:
-    return os.getenv("AI_MODEL") or "gpt-4o-mini"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+_gemini_client: AsyncOpenAI | None = None
+
+
+def build_model() -> Model | str:
+    """Gemini (through its OpenAI-compatible API) when GEMINI_API_KEY is set, else OpenAI."""
+    global _gemini_client
+
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_GEMINI_API_KEY")
+
+    if gemini_key:
+        if _gemini_client is None:
+            _gemini_client = AsyncOpenAI(api_key=gemini_key, base_url=GEMINI_BASE_URL)
+            # Traces are uploaded to OpenAI, which needs an OpenAI key.
+            set_tracing_disabled(True)
+
+        return OpenAIChatCompletionsModel(
+            model=os.getenv("AI_MODEL") or "gemini-2.5-flash",
+            openai_client=_gemini_client,
+        )
+
+    if os.getenv("OPENAI_API_KEY"):
+        return os.getenv("AI_MODEL") or "gpt-4o-mini"
+
+    raise RuntimeError("GEMINI_API_KEY is not set in env")
 
 
 def message_text(item: Any) -> str:
@@ -82,7 +107,8 @@ async def get_thread_messages(auth_user_id: str, thread_id: str) -> list[dict[st
         if not content:
             continue
 
-        messages.append({"id": item.get("id") or f"{thread_id}-{index}", "role": role, "content": content})
+        # Position-based ids: providers like Gemini give every message the same placeholder id.
+        messages.append({"id": f"{thread_id}-{index}", "role": role, "content": content})
 
     return messages
 
@@ -90,8 +116,7 @@ async def get_thread_messages(auth_user_id: str, thread_id: str) -> list[dict[st
 async def stream_agent_reply(
     auth_user_id: str, thread_id: str, message: str, on_event: OnEvent
 ) -> None:
-    if not os.getenv("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY is not set in env")
+    model = build_model()
 
     await memory.ensure_thread(thread_id, auth_user_id)
 
@@ -100,7 +125,7 @@ async def stream_agent_reply(
     agent = Agent[AgentContext](
         name="Meeting Assistant",
         instructions=get_agent_instructions(await memory.get_working_memory(auth_user_id)),
-        model=model_name(),
+        model=model,
         tools=CALENDAR_TOOLS,
     )
 

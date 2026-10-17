@@ -1,4 +1,4 @@
-"""Run every sql/*.sql file in order. Usage (from backend-python/): python -m scripts.migrate"""
+"""Run every sql/*.sql file in order. Usage (from backend/): python -m scripts.migrate"""
 
 import asyncio
 import os
