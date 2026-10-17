@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: agentic-calendar-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python -m scripts.migrate
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agentic-calendar-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: APP_URL
+        sync: false
+      - key: DESCOPE_PROJECT_ID
+        sync: false
+      - key: DESCOPE_MANAGEMENT_KEY
+        sync: false
+      - key: DESCOPE_CALENDAR_CONNECTION_ID
+        value: google-calendar
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: gemini-3.8-flash
+
+databases:
+  - name: agentic-calendar-db
+    plan: free
