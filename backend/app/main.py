@@ -38,9 +38,16 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Agentic Calendar App", lifespan=lifespan)
 
+cors_origins = ["http://localhost:3000"]
+if app_url := os.getenv("APP_URL"):
+    for origin in app_url.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned and cleaned not in cors_origins:
+            cors_origins.append(cleaned)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("APP_URL") or "http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
