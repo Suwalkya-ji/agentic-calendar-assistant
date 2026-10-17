@@ -6,5 +6,12 @@ __pycache__/
 .venv/
 venv/
 
-backend-python/.env
+# Environment files
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+
+# Databases & local storage
 *.db
