@@ -38,7 +38,7 @@ def build_model() -> Model | str:
             set_tracing_disabled(True)
 
         return OpenAIChatCompletionsModel(
-            model=os.getenv("AI_MODEL") or "gemini-2.5-flash",
+            model=os.getenv("AI_MODEL") or "gemini-3.8-flash",
             openai_client=_gemini_client,
         )
 
