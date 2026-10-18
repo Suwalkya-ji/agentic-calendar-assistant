@@ -1,12 +1,12 @@
 # Agentic Calendar Assistant — backend
 
-Python (FastAPI) backend, ported from the original Node/Express backend with the same HTTP API.
+Python (FastAPI) backend, ported from the original Node/Express backend with the same HTTP API. See the [root README](../README.md) for the full project overview, setup and deployment.
 
 | Node backend | Python backend |
 |---|---|
 | Express 5 | FastAPI + uvicorn |
 | `pg` | `asyncpg` |
-| Mastra agent + memory (`mastra.db`) | OpenAI Agents SDK running Gemini (or OpenAI), with history in `memory.db` (SQLite) |
+| Mastra agent + memory (`mastra.db`) | OpenAI Agents SDK running Gemini (or OpenAI), with history in Postgres |
 | `googleapis` | Google Calendar REST API through `httpx` |
 | `@descope/node-sdk` | `descope` (async client) |
 | `@descope/mcp-express` | `mcp` SDK (`MCPServer`) with a Descope token verifier |
@@ -47,19 +47,20 @@ All `/api/*` routes need `Authorization: Bearer <Descope session token>`.
 ```
 app/
   main.py                    FastAPI app, CORS, /health, router + MCP mounting
-  config/                    descope client, agent instructions, memory (SQLite)
-  db/pool.py                 asyncpg pool
+  config/                    descope client, agent instructions, chat memory (Postgres)
+  db/pool.py                 asyncpg pool (small, no statement cache: works with Supabase's pooler)
   middleware/require_session.py   Descope session check (FastAPI dependency)
   repositories/              users / connections SQL
   routes/                    connection + agent routes
   services/                  agent, agent tools, calendar, connection, token
   mcp/server.py              Descope-protected MCP server
-scripts/migrate.py           runs sql/*.sql in order
+scripts/migrate.py           runs sql/*.sql in order (all migrations are idempotent)
+sql/                         users, connections, agent memory, row level security
 ```
 
 ## AI model
 
-Set `GEMINI_API_KEY` to use Google Gemini (default model `gemini-2.5-flash`; change it with `AI_MODEL`).
+Set `GEMINI_API_KEY` to use Google Gemini (change the model with `AI_MODEL`).
 If `GEMINI_API_KEY` is empty and `OPENAI_API_KEY` is set, OpenAI is used instead (default `gpt-4o-mini`).
 
 ## Differences from the Node version
@@ -70,4 +71,4 @@ If `GEMINI_API_KEY` is empty and `OPENAI_API_KEY` is set, OpenAI is used instead
 - `/chat` refuses a `threadId` that belongs to another user.
 - `/connect` returns 400 properly when `refreshToken` is missing.
 - The app refuses to start without `DESCOPE_PROJECT_ID`, because the Python Descope SDK requires it.
-- Chat history isn't shared with the Node backend: `memory.db` replaces `mastra.db`.
+- Chat threads, messages and working memory are stored in Postgres (`agent_threads`, `agent_messages`, `working_memory`), so they survive restarts and redeploys.
