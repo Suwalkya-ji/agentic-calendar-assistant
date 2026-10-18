@@ -26,7 +26,7 @@ import {
 import { ScrollArea } from "../ui/scroll-area";
 import { Textarea } from "../ui/textarea";
 import { cn } from "@/lib/utils";
-import { MarkdownMessage } from "./markdown-message";
+import { MarkdownMessage, formatErrorMessage } from "./markdown-message";
 
 const styles = {
   root: "flex h-svh overflow-hidden",
@@ -258,7 +258,7 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
                 message.id === assistantId
                   ? {
                       ...message,
-                      content: event.message ?? "Agent failed",
+                      content: formatErrorMessage(event.message ?? "Agent failed"),
                     }
                   : message,
               ),

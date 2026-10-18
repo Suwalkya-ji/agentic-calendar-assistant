@@ -14,6 +14,7 @@ from app.services.agent_service import (
     list_user_threads,
     stream_agent_reply,
 )
+from app.services.error_utils import format_agent_error
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +83,10 @@ async def chat(
                 on_event=on_event,
             )
         except PermissionError as error:
-            await queue.put({"type": "error", "message": str(error)})
+            await queue.put({"type": "error", "message": format_agent_error(error)})
         except Exception as error:
-            logger.exception("chat failed")
-            await queue.put({"type": "error", "message": str(error) or "chat failed"})
+            logger.exception("chat failed: %s", error)
+            await queue.put({"type": "error", "message": format_agent_error(error)})
         finally:
             await queue.put(None)
 

@@ -25,6 +25,42 @@ const styles = {
   blockquote: "mb-3 border-l-2 border-primary/40 pl-3 text-muted-foreground",
 } as const;
 
+export function formatErrorMessage(content: string): string {
+  if (!content) return content;
+  const lower = content.toLowerCase();
+
+  if (
+    lower.includes("resource_exhausted") ||
+    lower.includes("quota exceeded") ||
+    lower.includes("code: 429") ||
+    (lower.includes("429") && lower.includes("quota"))
+  ) {
+    const retryMatch = content.match(/retry\s+(?:in|after)\s+([0-9a-zA-Z\.]+)/i);
+    if (retryMatch) {
+      const raw = retryMatch[1].replace(/\.$/, "");
+      const hMatch = raw.match(/(\d+)\s*h/);
+      const mMatch = raw.match(/(\d+)\s*m/);
+      const sMatch = raw.match(/(\d+)(?:\.\d+)?\s*s/);
+
+      const parts: string[] = [];
+      if (hMatch) parts.push(`${hMatch[1]} hour${hMatch[1] !== "1" ? "s" : ""}`);
+      if (mMatch) parts.push(`${mMatch[1]} minute${mMatch[1] !== "1" ? "s" : ""}`);
+      if (!hMatch && !mMatch && sMatch) parts.push(`${sMatch[1]} second${sMatch[1] !== "1" ? "s" : ""}`);
+
+      if (parts.length > 0) {
+        return `⏳ **Daily Request Limit Reached**\n\nYou have reached the free tier quota for this AI model. Please retry in **${parts.join(" and ")}**.`;
+      }
+      if (raw) {
+        return `⏳ **Daily Request Limit Reached**\n\nYou have reached the free tier quota for this AI model. Please retry in **${raw}**.`;
+      }
+    }
+
+    return "⏳ **Daily Request Limit Reached**\n\nYou have reached the daily free quota for the AI model. Please wait a while before sending another message.";
+  }
+
+  return content;
+}
+
 type Props = {
   content: string;
   className?: string;
@@ -36,6 +72,8 @@ export function MarkdownMessage({
   className,
   tone = "assistant",
 }: Props) {
+  const displayContent = tone === "user" ? content : formatErrorMessage(content);
+
   return (
     <div
       className={cn(styles.root, tone === "user" && styles.rootUser, className)}
@@ -69,7 +107,7 @@ export function MarkdownMessage({
           ),
         }}
       >
-        {content}
+        {displayContent}
       </ReactMarkdown>
     </div>
   );
