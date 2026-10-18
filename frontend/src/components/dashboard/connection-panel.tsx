@@ -15,7 +15,8 @@ import {
 const styles = {
   root: "space-y-1.5",
   title: "px-0.5 text-sm font-semibold text-sidebar-foreground",
-  error: "text-xs text-destructive",
+  error: "min-w-0 flex-1 text-xs text-destructive",
+  errorRow: "flex items-center gap-2 px-0.5",
   skeleton: "h-11 w-full rounded-xl",
   row: "flex items-center gap-2 rounded-xl bg-sidebar-accent/50 px-2 py-2",
   iconBox: "flex size-8 shrink-0 items-center justify-center rounded-lg",
@@ -32,6 +33,10 @@ const styles = {
   refreshIcon: "size-3.5",
 } as const;
 
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
 function statusLabel(status: ConnectionInfo["status"]) {
   if (status === "connected") return "Connected";
   if (status === "pending") return "Pending";
@@ -43,14 +48,25 @@ function ConnectionsPanel({ sessionToken }: { sessionToken: string }) {
   const [connection, setConnection] = useState<ConnectionInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLoadCalendarConnection = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
     try {
-      setConnection(await fetchCalendarConnection(sessionToken));
-    } catch {
-      console.log("failed to load calendar connection");
+      let next = await fetchCalendarConnection(sessionToken);
+
+      // Coming back from Google, the status is still "pending" until we ask
+      // the backend to check with Descope, so do that automatically.
+      if (next.status === "pending") {
+        await refreshCalendarConnection(sessionToken);
+        next = await fetchCalendarConnection(sessionToken);
+      }
+
+      setConnection(next);
+    } catch (err) {
+      setError(errorMessage(err, "Could not load the calendar connection"));
     } finally {
       setLoading(false);
     }
@@ -62,21 +78,26 @@ function ConnectionsPanel({ sessionToken }: { sessionToken: string }) {
 
   async function handleCalendarConnect() {
     setBusy(true);
+    setError(null);
+
     try {
+      // On success this navigates away to Google, so busy stays on.
       await connectCalendar(sessionToken);
-    } catch {
-      console.log("failed to connect");
+    } catch (err) {
+      setError(errorMessage(err, "Could not start the Google connection"));
+      setBusy(false);
     }
   }
 
   async function handleCalendarRefresh() {
     setBusy(true);
+    setError(null);
 
     try {
       await refreshCalendarConnection(sessionToken);
       await handleLoadCalendarConnection();
-    } catch {
-      console.log("failed to refresh");
+    } catch (err) {
+      setError(errorMessage(err, "Could not refresh the connection"));
     } finally {
       setBusy(false);
     }
@@ -88,9 +109,24 @@ function ConnectionsPanel({ sessionToken }: { sessionToken: string }) {
     <div className={styles.root}>
       <p className={styles.title}>Connections</p>
 
-      {loading || !connection ? (
+      {error && (
+        <div className={styles.errorRow}>
+          <p className={styles.error}>{error}</p>
+          <Button
+            size="sm"
+            variant="ghost"
+            className={styles.actionBtn}
+            disabled={loading || busy}
+            onClick={() => handleLoadCalendarConnection()}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {loading ? (
         <Skeleton className={styles.skeleton} />
-      ) : (
+      ) : !connection ? null : (
         <div className={styles.row}>
           <div
             className={cn(

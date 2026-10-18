@@ -90,11 +90,7 @@ async def get_thread_messages(auth_user_id: str, thread_id: str) -> list[dict[st
     if not thread or thread["resource_id"] != auth_user_id:
         return None
 
-    session = memory.open_session(thread_id)
-    try:
-        items = await session.get_all_items()
-    finally:
-        session.close()
+    items = await memory.open_session(thread_id).get_all_items()
 
     messages: list[dict[str, str]] = []
 
@@ -129,26 +125,22 @@ async def stream_agent_reply(
         tools=CALENDAR_TOOLS,
     )
 
-    session = memory.open_session(thread_id)
-    try:
-        result = Runner.run_streamed(
-            agent,
-            message,
-            context=AgentContext(auth_user_id=auth_user_id),
-            session=session,
-        )
+    result = Runner.run_streamed(
+        agent,
+        message,
+        context=AgentContext(auth_user_id=auth_user_id),
+        session=memory.open_session(thread_id),
+    )
 
-        async for event in result.stream_events():
-            if event.type == "run_item_stream_event" and isinstance(event.item, ToolCallItem):
-                tool_name = getattr(event.item.raw_item, "name", None) or "tool"
-                await on_event({"type": "progress", "message": f"Running {tool_name}"})
-                continue
+    async for event in result.stream_events():
+        if event.type == "run_item_stream_event" and isinstance(event.item, ToolCallItem):
+            tool_name = getattr(event.item.raw_item, "name", None) or "tool"
+            await on_event({"type": "progress", "message": f"Running {tool_name}"})
+            continue
 
-            if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
-                if event.data.delta:
-                    await on_event({"type": "token", "token": event.data.delta})
-    finally:
-        session.close()
+        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
+            if event.data.delta:
+                await on_event({"type": "token", "token": event.data.delta})
 
     # streaming finished
     await memory.touch_thread(thread_id, title=message[:80])

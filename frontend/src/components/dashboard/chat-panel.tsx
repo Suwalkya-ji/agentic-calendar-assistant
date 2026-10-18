@@ -54,6 +54,7 @@ const styles = {
   chatsScroll: "min-h-0 flex-1 px-1 pb-3",
   chatsEmpty: "px-2 py-3 text-sm leading-relaxed text-muted-foreground",
   threadList: "space-y-1",
+  chatsError: "px-1 text-xs text-destructive",
   threadBtn:
     "w-full rounded-xl px-3 py-2.5 text-left transition-colors disabled:opacity-50",
   threadBtnActive: "bg-sidebar-accent text-sidebar-accent-foreground",
@@ -132,6 +133,13 @@ const SUGGESTIONS = [
   "Create a meeting on 20th aug and keep the time as 10am for 30 minutes and keep sangammukherjee1996@gmail as attendee",
 ];
 
+function formatThreadTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 function WelcomeMessage(): Message {
   return {
     id: "welcome",
@@ -144,6 +152,7 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
   const [threadId, setThreadId] = useState(() => crypto.randomUUID());
   const [messages, setMessages] = useState<Message[]>([WelcomeMessage()]);
   const [threads, setThreads] = useState<ThreadSummary[]>([]);
+  const [threadsError, setThreadsError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
@@ -158,7 +167,12 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
     try {
       const data = await listThreads(sessionToken);
       setThreads(data.threads);
-    } catch {}
+      setThreadsError(null);
+    } catch (error) {
+      setThreadsError(
+        error instanceof Error ? error.message : "Could not load chats",
+      );
+    }
   }, [sessionToken]);
 
   useEffect(() => {
@@ -324,7 +338,11 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
         <div className={styles.chatsSection}>
           <p className={styles.chatsTitle}>Chats</p>
           <ScrollArea className={styles.chatsScroll}>
-            {threads.length === 0 ? (
+            {threadsError ? (
+              <p className={styles.chatsError}>
+                Could not load chats: {threadsError}
+              </p>
+            ) : threads.length === 0 ? (
               <p className={styles.chatsEmpty}>
                 No chats yet. Start one and it will show up here.
               </p>
@@ -345,7 +363,7 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
                     >
                       <span className={styles.threadTitle}>{thread.title}</span>
                       <span className={styles.threadTime}>
-                        {thread.updatedAt}
+                        {formatThreadTime(thread.updatedAt)}
                       </span>
                     </button>
                   );
