@@ -1,22 +1,29 @@
-import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Manrope, Newsreader } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@descope/nextjs-sdk";
 import { cn } from "@/lib/utils";
 
-const sans = Plus_Jakarta_Sans({
+const sans = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const heading = Source_Serif_4({
+const heading = Newsreader({
   subsets: ["latin"],
   variable: "--font-heading",
 });
 
 export const metadata: Metadata = {
-  title: "Meeting Assistant",
-  description: "Calendar meeting assistant with Descope",
+  title: "Concierge — Meeting Assistant",
+  description: "Your private calendar concierge: schedule, reschedule and brief your day.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f8f4e7",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

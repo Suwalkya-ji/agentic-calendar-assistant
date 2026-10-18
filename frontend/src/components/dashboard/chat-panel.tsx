@@ -2,9 +2,21 @@
 
 import {
   ArrowUp,
+  CalendarCheck,
+  CalendarClock,
+  CalendarDays,
+  CalendarPlus,
+  CalendarSearch,
+  CalendarX,
+  Clock,
   LoaderCircle,
-  MessageSquarePlus,
+  Menu,
+  MessageSquare,
+  NotebookPen,
+  Plus,
   Sparkles,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   FormEvent,
@@ -16,7 +28,6 @@ import {
   useState,
 } from "react";
 import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
 import {
   listThreads,
   loadThread,
@@ -29,86 +40,112 @@ import { cn } from "@/lib/utils";
 import { MarkdownMessage, formatErrorMessage } from "./markdown-message";
 
 const styles = {
-  root: "flex h-svh overflow-hidden",
-  overlay: "fixed inset-0 z-30 bg-foreground/20 backdrop-blur-[2px] md:hidden",
+  root: "flex h-svh overflow-hidden bg-background",
+
+  // Left rail: fixed 300px on desktop, off-canvas drawer below lg.
+  overlay: "fixed inset-0 z-30 bg-foreground/25 backdrop-blur-[2px] lg:hidden",
   aside:
-    "fixed inset-y-0 left-0 z-40 flex w-[18.5rem] flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-xl transition-transform md:static md:translate-x-0",
-  asideOpen: "translate-x-0",
+    "fixed inset-y-0 left-0 z-40 flex w-[300px] max-w-[85vw] flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out lg:static lg:max-w-none lg:translate-x-0 lg:shadow-none",
+  asideOpen: "translate-x-0 surface-3",
   asideClosed: "-translate-x-full",
-  brandRow: "flex items-center justify-between gap-2 px-4 pt-4 pb-3",
-  brandLeft: "flex min-w-0 items-center gap-2.5",
-  brandIcon:
-    "flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground",
-  brandIconSvg: "size-4",
-  brandText: "min-w-0",
-  brandTitle: "font-heading text-lg font-semibold tracking-tight",
-  brandSubtitle: "truncate text-xs text-muted-foreground",
-  mobileCloseBtn: "md:hidden",
-  topActions: "space-y-3 px-3 pb-3",
-  newChatBtn:
-    "w-full justify-start gap-2 rounded-xl border-sidebar-border bg-card/70 text-sm",
-  newChatIcon: "size-4",
-  separator: "opacity-70",
-  chatsSection: "flex min-h-0 flex-1 flex-col px-2 pt-3",
-  chatsTitle: "mb-2 px-2 text-sm font-semibold text-sidebar-foreground",
-  chatsScroll: "min-h-0 flex-1 px-1 pb-3",
-  chatsEmpty: "px-2 py-3 text-sm leading-relaxed text-muted-foreground",
-  threadList: "space-y-1",
-  chatsError: "px-1 text-xs text-destructive",
+  brandRow: "flex items-center justify-between gap-2 px-5 pt-5 pb-4",
+  brandLeft: "flex min-w-0 items-center gap-3",
+  brandMark:
+    "flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground",
+  brandMarkIcon: "size-4",
+  brandTitle: "font-heading text-[22px] leading-none font-medium tracking-tight",
+  brandSub:
+    "mt-1 text-[11px] font-bold tracking-[0.08em] text-muted-foreground uppercase",
+  closeBtn: "lg:hidden",
+  topActions: "space-y-4 px-4 pb-4",
+  newChatBtn: "h-10 w-full justify-start gap-2 rounded-lg px-3 text-sm font-semibold",
+  sectionLabel:
+    "px-1 text-[11px] font-bold tracking-[0.08em] text-muted-foreground uppercase",
+  chatsSection: "flex min-h-0 flex-1 flex-col border-t border-sidebar-border pt-4",
+  chatsHeader: "mb-2 px-5",
+  chatsScroll: "min-h-0 flex-1 px-3 pb-3",
+  chatsEmpty:
+    "mx-2 rounded-lg border border-dashed border-border px-3 py-4 text-[13px] leading-relaxed text-muted-foreground",
+  chatsError:
+    "mx-2 rounded-lg bg-destructive/[0.06] px-3 py-2.5 text-xs text-destructive",
+  threadList: "space-y-0.5",
   threadBtn:
-    "w-full rounded-xl px-3 py-2.5 text-left transition-colors disabled:opacity-50",
-  threadBtnActive: "bg-sidebar-accent text-sidebar-accent-foreground",
-  threadBtnIdle: "hover:bg-sidebar-accent/60",
-  threadTitle: "line-clamp-2 text-sm font-medium leading-snug",
-  threadTime: "mt-1 block text-xs text-muted-foreground",
-  footer: "mt-auto border-t border-sidebar-border p-3",
+    "group relative flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors disabled:opacity-50",
+  threadBtnActive: "bg-card ring-1 ring-border",
+  threadBtnIdle: "hover:bg-card/70",
+  threadActiveBar: "absolute top-2.5 bottom-2.5 left-0 w-0.5 rounded-full bg-primary",
+  threadIcon: "mt-0.5 size-4 shrink-0 text-muted-foreground",
+  threadIconActive: "text-primary",
+  threadText: "min-w-0 flex-1",
+  threadTitle: "line-clamp-1 text-sm font-medium leading-snug",
+  threadTime: "mt-0.5 block text-xs text-muted-foreground tabular-nums",
+  footer: "border-t border-sidebar-border p-4",
+
+  // Main canvas
   main: "relative flex min-w-0 flex-1 flex-col",
-  header:
-    "flex h-14 shrink-0 items-center gap-3 border-b border-border/70 bg-background/50 px-3 backdrop-blur-md md:px-5",
-  mobileMenuBtn: "md:hidden",
-  menuIcon: "size-5",
-  headerText: "min-w-0",
-  headerTitle: "truncate text-base font-semibold",
-  headerSubtitle: "truncate text-sm text-muted-foreground",
-  chatColumn: "relative flex min-h-0 flex-1 flex-col",
-  messagesScroll: "h-full min-h-0 flex-1",
-  messagesInner: "mx-auto w-full max-w-3xl px-4 py-8 sm:px-6",
-  emptyState:
-    "flex min-h-[52vh] flex-col items-center justify-center text-center",
-  emptyIcon:
-    "mb-5 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground",
-  emptyIconSvg: "size-6",
-  emptyTitle: "font-heading text-3xl font-semibold tracking-tight sm:text-4xl",
-  emptyCopy: "mt-3 max-w-md text-base leading-relaxed text-muted-foreground",
-  suggestions: "mt-8 flex flex-wrap justify-center gap-2",
-  suggestionBtn: "rounded-full border-border/80 bg-card/80 px-3.5 text-[13px]",
+  topBar:
+    "flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/90 px-3 backdrop-blur-md sm:px-6 lg:px-8",
+  menuBtn: "lg:hidden",
+  topTitle: "min-w-0 flex-1",
+  topTitleText: "truncate font-heading text-lg leading-tight font-medium",
+  topSub: "hidden truncate text-xs text-muted-foreground sm:block",
+  newChatIconBtn: "lg:hidden",
+
+  messagesScroll: "min-h-0 flex-1",
+  messagesInner: "mx-auto w-full max-w-[820px] px-4 py-8 sm:px-6 lg:py-12",
+
+  emptyState: "flex min-h-[55vh] flex-col justify-center py-6",
+  eyebrow:
+    "inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.08em] text-primary uppercase",
+  emptyTitle:
+    "mt-4 font-heading text-[32px] leading-10 font-normal tracking-[-0.01em] sm:text-[40px] sm:leading-[48px] sm:tracking-[-0.02em]",
+  emptyCopy: "mt-3 max-w-lg text-base leading-[26px] text-muted-foreground",
+  suggestions: "mt-8 grid gap-2.5 sm:grid-cols-2",
+  suggestionBtn:
+    "group flex items-start gap-3 rounded-lg border border-border bg-secondary px-4 py-3.5 text-left transition-all hover:-translate-y-px hover:border-rose hover:bg-card disabled:pointer-events-none disabled:opacity-50",
+  suggestionIcon:
+    "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-card text-primary ring-1 ring-border transition-colors group-hover:bg-accent",
+  suggestionLabel: "text-sm font-semibold",
+  suggestionHint: "mt-0.5 block text-xs text-muted-foreground",
+
   messageList: "space-y-6",
   statusRow: "flex items-center gap-2 text-sm text-muted-foreground",
-  statusIcon: "size-4 animate-spin",
-  statusIconSm: "size-3.5 animate-spin",
-  messageRow: "message-enter flex w-full min-w-0",
+  spin: "size-4 animate-spin",
+  spinSm: "size-3.5 animate-spin",
+  messageRow: "message-enter flex w-full min-w-0 gap-3",
   messageRowUser: "justify-end",
   messageRowAssistant: "justify-start",
+  avatar:
+    "mt-0.5 hidden size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground sm:flex",
+  avatarIcon: "size-3.5",
   bubble:
-    "min-w-0 max-w-[min(100%,42rem)] overflow-hidden break-words [overflow-wrap:anywhere]",
+    "min-w-0 max-w-[min(100%,40rem)] overflow-hidden break-words [overflow-wrap:anywhere]",
   bubbleUser:
-    "rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-primary-foreground",
+    "rounded-lg rounded-br-sm bg-primary px-4 py-2.5 text-primary-foreground",
   bubbleAssistant:
-    "rounded-2xl rounded-bl-md bg-card px-4 py-3 text-foreground ring-1 ring-primary/15",
-  bubbleSystem: "rounded-2xl bg-muted px-4 py-2.5 text-muted-foreground",
+    "rounded-lg rounded-tl-sm border border-border bg-secondary px-4 py-3 text-foreground",
+  bubbleSystem:
+    "rounded-lg border border-destructive/20 bg-destructive/[0.05] px-4 py-2.5 text-sm text-destructive",
   thinking: "inline-flex items-center gap-2 text-sm text-muted-foreground",
   userText: "whitespace-pre-wrap text-[15px] leading-7",
+
+  // Tool execution live status feed
+  feed: "border-l border-dashed border-border pl-4 sm:ml-[13px]",
+  feedItem: "flex items-center gap-2.5 text-[13px] text-muted-foreground",
+  feedIcon:
+    "flex size-6 items-center justify-center rounded-md bg-card text-primary ring-1 ring-border",
+  feedIconSvg: "size-3.5",
+
   composerWrap:
-    "shrink-0 border-t border-border/60 bg-background/70 px-4 py-4 backdrop-blur-md sm:px-6",
+    "pb-safe shrink-0 border-t border-border bg-background/95 px-3 pt-3 backdrop-blur-md sm:px-6",
   composerForm:
-    "composer-glow mx-auto flex w-full max-w-3xl items-end gap-2 rounded-2xl border border-border/80 bg-card p-2.5",
+    "surface-2 mx-auto flex w-full max-w-[820px] items-end gap-2 rounded-xl p-2 transition-colors focus-within:border-primary",
   composerInput:
     "max-h-40 min-h-[44px] flex-1 resize-none border-0 bg-transparent px-3 py-2.5 text-[15px] shadow-none focus-visible:ring-0",
-  sendBtn: "mb-0.5 size-10 shrink-0 rounded-xl",
+  sendBtn: "mb-0.5 size-10 shrink-0 rounded-lg",
   sendIcon: "size-4",
-  sendIconSpin: "size-4 animate-spin",
   composerHint:
-    "mx-auto mt-2.5 max-w-3xl text-center text-[11px] text-muted-foreground",
+    "mx-auto mt-2 hidden max-w-[820px] text-center text-[11px] text-muted-foreground sm:block",
 } as const;
 
 type Props = {
@@ -126,18 +163,64 @@ type Message = {
 const WELCOME =
   "Connect Google Calendar, then ask about today's agenda, create a Meet, or reschedule something.";
 
-const SUGGESTIONS = [
-  "What's on today?",
-  "What's on tomorrow?",
-  "Find a free slot tomorrow morning",
-  "Create a meeting on 20th aug and keep the time as 10am for 30 minutes and keep sangammukherjee1996@gmail as attendee",
+const SUGGESTIONS: { prompt: string; label: string; hint: string; icon: LucideIcon }[] = [
+  {
+    prompt: "What's on today?",
+    label: "Today's agenda",
+    hint: "A short brief of your day",
+    icon: CalendarDays,
+  },
+  {
+    prompt: "What's on tomorrow?",
+    label: "Tomorrow at a glance",
+    hint: "Prepare for what's next",
+    icon: CalendarClock,
+  },
+  {
+    prompt: "Find a free slot tomorrow morning",
+    label: "Find a free slot",
+    hint: "Check availability before you book",
+    icon: Clock,
+  },
+  {
+    prompt:
+      "Schedule a 30 minute meeting tomorrow at 10am with a Google Meet link and invite dineshsuwalkya31@gmail.com",
+    label: "Schedule a meeting",
+    hint: "Invites dineshsuwalkya31@gmail.com with a Meet link",
+    icon: CalendarPlus,
+  },
 ];
+
+// Backend progress events look like "Running <tool_name>".
+const TOOL_LABELS: Record<string, { label: string; icon: LucideIcon }> = {
+  list_upcoming_meetings: { label: "Reviewing your calendar", icon: CalendarSearch },
+  check_calendar_busy: { label: "Checking availability", icon: Clock },
+  create_meeting: { label: "Creating the meeting", icon: CalendarPlus },
+  reschedule_meeting: { label: "Rescheduling the meeting", icon: CalendarCheck },
+  cancel_meeting: { label: "Cancelling the meeting", icon: CalendarX },
+  update_working_memory: { label: "Saving your preference", icon: NotebookPen },
+};
+
+function describeProgress(message: string) {
+  const tool = message.replace(/^Running\s+/i, "").trim();
+  return TOOL_LABELS[tool] ?? { label: message, icon: Sparkles };
+}
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 function formatThreadTime(value: string) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  if (Number.isNaN(date.getTime())) return value;
+
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return sameDay
+    ? date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function WelcomeMessage(): Message {
@@ -157,6 +240,7 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
   const [running, setRunning] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const showEmpty =
     messages.length === 1 && messages[0]?.id === "welcome" && !running;
@@ -183,14 +267,26 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, progress]);
 
+  // Close the drawer with Escape.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setDrawerOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
+
   function startNewChat() {
     if (running) return;
     setThreadId(crypto.randomUUID());
     setMessages([WelcomeMessage()]);
     setPrompt("");
+    setDrawerOpen(false);
   }
 
   async function resumeThread(nextThreadId: string) {
+    setDrawerOpen(false);
     if (running || loadingThread || nextThreadId === threadId) return;
     setLoadingThread(true);
     setProgress(null);
@@ -309,34 +405,57 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
     }
   }
 
+  const activeTitle = threads.find((thread) => thread.id === threadId)?.title;
+  const step = progress ? describeProgress(progress) : null;
+  const StepIcon = step?.icon;
+
   return (
     <div className={styles.root}>
-      <aside className={styles.aside}>
+      {drawerOpen && (
+        <div
+          className={styles.overlay}
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(styles.aside, drawerOpen ? styles.asideOpen : styles.asideClosed)}
+        aria-label="Conversations and account"
+      >
         <div className={styles.brandRow}>
           <div className={styles.brandLeft}>
-            <div className={styles.brandIcon}>
-              <Sparkles className={styles.brandIconSvg} />
+            <div className={styles.brandMark}>
+              <Sparkles className={styles.brandMarkIcon} />
             </div>
-            <div className={styles.brandText}>
-              <p className={styles.brandTitle}>Meet Agent</p>
+            <div className="min-w-0">
+              <p className={styles.brandTitle}>Concierge</p>
+              <p className={styles.brandSub}>Meeting assistant</p>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={styles.closeBtn}
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Close menu"
+          >
+            <X />
+          </Button>
         </div>
 
         <div className={styles.topActions}>
-          <Button
-            onClick={startNewChat}
-            variant="outline"
-            className={styles.newChatBtn}
-          >
-            <MessageSquarePlus className={styles.newChatIcon} />
-            New Chat
+          <Button onClick={startNewChat} className={styles.newChatBtn} disabled={running}>
+            <Plus className="size-4" />
+            New conversation
           </Button>
           {connections}
         </div>
-        <Separator className={styles.separator} />
+
         <div className={styles.chatsSection}>
-          <p className={styles.chatsTitle}>Chats</p>
+          <div className={styles.chatsHeader}>
+            <p className={styles.sectionLabel}>Recent</p>
+          </div>
           <ScrollArea className={styles.chatsScroll}>
             {threadsError ? (
               <p className={styles.chatsError}>
@@ -344,7 +463,7 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
               </p>
             ) : threads.length === 0 ? (
               <p className={styles.chatsEmpty}>
-                No chats yet. Start one and it will show up here.
+                No conversations yet. Your threads will appear here.
               </p>
             ) : (
               <div className={styles.threadList}>
@@ -360,10 +479,17 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
                         styles.threadBtn,
                         active ? styles.threadBtnActive : styles.threadBtnIdle,
                       )}
+                      aria-current={active ? "true" : undefined}
                     >
-                      <span className={styles.threadTitle}>{thread.title}</span>
-                      <span className={styles.threadTime}>
-                        {formatThreadTime(thread.updatedAt)}
+                      {active && <span className={styles.threadActiveBar} />}
+                      <MessageSquare
+                        className={cn(styles.threadIcon, active && styles.threadIconActive)}
+                      />
+                      <span className={styles.threadText}>
+                        <span className={styles.threadTitle}>{thread.title}</span>
+                        <span className={styles.threadTime}>
+                          {formatThreadTime(thread.updatedAt)}
+                        </span>
                       </span>
                     </button>
                   );
@@ -372,142 +498,175 @@ function ChatPanel({ sessionToken, connections, footer }: Props) {
             )}
           </ScrollArea>
         </div>
-        <Separator className={styles.separator} />
 
         <div className={styles.footer}>{footer}</div>
       </aside>
 
       <section className={styles.main}>
-        <header className={styles.header}>
-          <div className={styles.headerText}>
-            <p className={styles.headerTitle}>Assistant</p>
-            <p className={styles.headerSubtitle}>
-              Schedule, reschedule, and brief your day
+        <header className={styles.topBar}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={styles.menuBtn}
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu />
+          </Button>
+          <div className={styles.topTitle}>
+            <p className={styles.topTitleText}>
+              {showEmpty ? "New conversation" : activeTitle || "Conversation"}
             </p>
+            <p className={styles.topSub}>Schedule, reschedule, and brief your day</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={styles.newChatIconBtn}
+            onClick={startNewChat}
+            disabled={running}
+            aria-label="New conversation"
+          >
+            <Plus />
+          </Button>
         </header>
 
-        <div className={styles.chatColumn}>
-          <ScrollArea className={styles.messagesScroll}>
-            <div className={styles.messagesInner}>
-              {showEmpty ? (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyIcon}>
-                    <Sparkles className={styles.emptyIconSvg} />
-                  </div>
-                  <h2 className={styles.emptyTitle}>Meeting Assistant</h2>
-                  <p className={styles.emptyCopy}>{WELCOME}</p>
-                  <div className={styles.suggestions}>
-                    {SUGGESTIONS.map((currentSuggestionItem) => (
-                      <Button
-                        key={currentSuggestionItem}
+        <ScrollArea className={styles.messagesScroll}>
+          <div className={styles.messagesInner}>
+            {showEmpty ? (
+              <div className={styles.emptyState}>
+                <p className={styles.eyebrow}>
+                  <Sparkles className="size-3.5" />
+                  Your calendar concierge
+                </p>
+                <h1 className={styles.emptyTitle}>
+                  {greeting()}. How may I help with your day?
+                </h1>
+                <p className={styles.emptyCopy}>{WELCOME}</p>
+                <div className={styles.suggestions}>
+                  {SUGGESTIONS.map((suggestion) => {
+                    const Icon = suggestion.icon;
+                    return (
+                      <button
+                        key={suggestion.prompt}
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendMessage(currentSuggestionItem)}
+                        onClick={() => sendMessage(suggestion.prompt)}
                         className={styles.suggestionBtn}
                         disabled={running || loadingThread}
                       >
-                        {currentSuggestionItem}
-                      </Button>
-                    ))}
-                  </div>
+                        <span className={styles.suggestionIcon}>
+                          <Icon className="size-4" />
+                        </span>
+                        <span>
+                          <span className={styles.suggestionLabel}>{suggestion.label}</span>
+                          <span className={styles.suggestionHint}>{suggestion.hint}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : (
-                <div className={styles.messageList}>
-                  {loadingThread ? (
-                    <div className={styles.statusRow}>
-                      <LoaderCircle className={styles.statusIcon} />
-                      Loading Chat...
-                    </div>
-                  ) : (
-                    messages.map((message) => {
-                      if (message.id === "welcome" && messages.length > 1) {
-                        return null;
-                      }
+              </div>
+            ) : (
+              <div className={styles.messageList}>
+                {loadingThread ? (
+                  <div className={styles.statusRow}>
+                    <LoaderCircle className={styles.spin} />
+                    Loading conversation…
+                  </div>
+                ) : (
+                  messages.map((message) => {
+                    if (message.id === "welcome" && messages.length > 1) {
+                      return null;
+                    }
 
-                      return (
+                    const isUser = message.role === "user";
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          styles.messageRow,
+                          isUser ? styles.messageRowUser : styles.messageRowAssistant,
+                        )}
+                      >
+                        {message.role === "assistant" && (
+                          <div className={styles.avatar} aria-hidden="true">
+                            <Sparkles className={styles.avatarIcon} />
+                          </div>
+                        )}
                         <div
-                          key={message.id}
                           className={cn(
-                            styles.messageRow,
-                            message.role === "user"
-                              ? styles.messageRowUser
-                              : styles.messageRowAssistant,
+                            styles.bubble,
+                            isUser && styles.bubbleUser,
+                            message.role === "assistant" && styles.bubbleAssistant,
+                            message.role === "system" && styles.bubbleSystem,
                           )}
                         >
-                          <div
-                            className={cn(
-                              styles.bubble,
-                              message.role === "user" && styles.bubbleUser,
-                              message.role === "assistant" &&
-                                styles.bubbleAssistant,
-                              message.role === "system" && styles.bubbleSystem,
-                            )}
-                          >
-                            {!message.content && running ? (
-                              <span className={styles.thinking}>
-                                <LoaderCircle className={styles.statusIconSm} />
-                                Thinking...
-                              </span>
-                            ) : message.role === "user" ? (
-                              <p className={styles.userText}>
-                                {message.content}
-                              </p>
-                            ) : (
-                              <MarkdownMessage
-                                content={message.content}
-                                tone={
-                                  message.role === "system"
-                                    ? "system"
-                                    : "assistant"
-                                }
-                              />
-                            )}
-                          </div>
+                          {!message.content && running ? (
+                            <span className={styles.thinking}>
+                              <LoaderCircle className={styles.spinSm} />
+                              Thinking…
+                            </span>
+                          ) : isUser ? (
+                            <p className={styles.userText}>{message.content}</p>
+                          ) : (
+                            <MarkdownMessage
+                              content={message.content}
+                              tone={message.role === "system" ? "system" : "assistant"}
+                            />
+                          )}
                         </div>
-                      );
-                    })
-                  )}
-
-                  {progress ? (
-                    <div className={styles.statusRow}>
-                      <LoaderCircle className={styles.statusIconSm} />
-                      {progress}
-                    </div>
-                  ) : null}
-                  <div ref={bottomRef} />
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          <div className={styles.composerWrap}>
-            <form onSubmit={onSubmit} className={styles.composerForm}>
-              <Textarea
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                rows={1}
-                onKeyDown={onKeyDown}
-                disabled={running}
-                placeholder="Ask about your calendar..."
-                className={styles.composerInput}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!prompt.trim() || running}
-                className={styles.sendBtn}
-                aria-label="Send Text Message"
-              >
-                {running ? (
-                  <LoaderCircle className={styles.sendIconSpin} />
-                ) : (
-                  <ArrowUp className={styles.sendIcon} />
+                      </div>
+                    );
+                  })
                 )}
-              </Button>
-            </form>
+
+                {step && StepIcon ? (
+                  <div className={styles.feed} role="status">
+                    <div className={styles.feedItem}>
+                      <span className={styles.feedIcon}>
+                        <StepIcon className={styles.feedIconSvg} />
+                      </span>
+                      {step.label}
+                      <LoaderCircle className={styles.spinSm} />
+                    </div>
+                  </div>
+                ) : null}
+                <div ref={bottomRef} />
+              </div>
+            )}
           </div>
+        </ScrollArea>
+
+        <div className={styles.composerWrap}>
+          <form onSubmit={onSubmit} className={styles.composerForm}>
+            <Textarea
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              rows={1}
+              onKeyDown={onKeyDown}
+              disabled={running}
+              placeholder="Ask about your calendar…"
+              className={styles.composerInput}
+              aria-label="Message"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!prompt.trim() || running}
+              className={styles.sendBtn}
+              aria-label="Send message"
+            >
+              {running ? (
+                <LoaderCircle className={cn(styles.sendIcon, "animate-spin")} />
+              ) : (
+                <ArrowUp className={styles.sendIcon} />
+              )}
+            </Button>
+          </form>
+          <p className={styles.composerHint}>
+            Enter to send · Shift + Enter for a new line
+          </p>
         </div>
       </section>
     </div>
