@@ -2,8 +2,8 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 const styles = {
   root: "markdown-body min-w-0 max-w-full overflow-hidden text-[15px] leading-7 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
@@ -22,7 +22,14 @@ const styles = {
   h1: "mb-2 font-heading text-xl font-semibold",
   h2: "mb-2 font-heading text-lg font-semibold",
   h3: "mb-2 text-base font-semibold",
-  blockquote: "mb-3 border-l-2 border-primary/40 pl-3 text-muted-foreground",
+  blockquote: "mb-3 border-l-2 border-rose pl-3 text-muted-foreground",
+  a: "inline-flex items-center gap-0.5 font-semibold text-primary underline decoration-rose underline-offset-4 transition-colors hover:decoration-primary",
+  linkIcon: "size-3.5",
+  tableWrap: "mb-3 max-w-full overflow-x-auto rounded-lg border border-border bg-card last:mb-0",
+  table: "w-full border-collapse text-sm tabular-nums [&_tr:last-child_td]:border-b-0",
+  th: "border-b border-border bg-secondary px-3 py-2 text-left text-xs font-semibold",
+  td: "border-b border-border px-3 py-2 align-top",
+  hr: "my-4 border-border",
 } as const;
 
 export function formatErrorMessage(content: string): string {
@@ -81,7 +88,27 @@ export function MarkdownMessage({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          a: ({ href, children }) => <Link href={href ?? "#"}>{children}</Link>,
+          a: ({ href, children }) => {
+            const external = Boolean(href && /^https?:\/\//.test(href));
+            return (
+              <a
+                href={href ?? "#"}
+                className={styles.a}
+                {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              >
+                {children}
+                {external && <ArrowUpRight className={styles.linkIcon} />}
+              </a>
+            );
+          },
+          table: ({ children }) => (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>{children}</table>
+            </div>
+          ),
+          th: ({ children }) => <th className={styles.th}>{children}</th>,
+          td: ({ children }) => <td className={styles.td}>{children}</td>,
+          hr: () => <hr className={styles.hr} />,
           p: ({ children }) => <p className={styles.p}>{children}</p>,
           ul: ({ children }) => <ul className={styles.ul}>{children}</ul>,
           ol: ({ children }) => <ol className={styles.ol}>{children}</ol>,
