@@ -7,10 +7,10 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
+      # Supabase: use the pooler connection string (Project Settings -> Database ->
+      # Connection pooling), not db.<ref>.supabase.co, which is IPv6-only.
       - key: DATABASE_URL
-        fromDatabase:
-          name: agentic-calendar-db
-          property: connectionString
+        sync: false
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: APP_URL
@@ -30,7 +30,3 @@ services:
         sync: false
       - key: DESCOPE_MCP_SERVER_WELL_KNOWN_URL
         sync: false
-
-databases:
-  - name: agentic-calendar-db
-    plan: free
