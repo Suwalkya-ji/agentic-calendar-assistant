@@ -183,9 +183,10 @@ const SUGGESTIONS: { prompt: string; label: string; hint: string; icon: LucideIc
     icon: Clock,
   },
   {
-    prompt: "Schedule a 30 minute meeting tomorrow at 10am with a Google Meet link",
+    prompt:
+      "Schedule a 30 minute meeting tomorrow at 10am with a Google Meet link and invite dineshsuwalkya31@gmail.com",
     label: "Schedule a meeting",
-    hint: "Invites and a Meet link included",
+    hint: "Invites dineshsuwalkya31@gmail.com with a Meet link",
     icon: CalendarPlus,
   },
 ];
