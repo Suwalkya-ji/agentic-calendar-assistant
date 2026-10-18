@@ -31,13 +31,25 @@ def connect_options() -> dict[str, Any]:
     return {"dsn": database_url(), "statement_cache_size": 0}
 
 
+def pool_options() -> dict[str, Any]:
+    # Keep the pool small: Supabase's free pooler allows few clients, and during a
+    # Render deploy the old and new instance are connected at the same time.
+    return {
+        **connect_options(),
+        "min_size": 1,
+        "max_size": int(os.getenv("DB_POOL_MAX_SIZE") or 5),
+        "timeout": 15,
+        "command_timeout": 30,
+    }
+
+
 async def get_pool() -> asyncpg.Pool:
     global _pool
 
     if _pool is None:
         async with _lock:
             if _pool is None:
-                _pool = await asyncpg.create_pool(**connect_options())
+                _pool = await asyncpg.create_pool(**pool_options())
 
     return _pool
 

@@ -42,9 +42,12 @@ async def require_session(request: Request) -> AuthContext:
     name = claims.get("name") if isinstance(claims.get("name"), str) else None
     try:
         user = await ensure_user(auth_user_id, email)
-    except Exception:
+    except Exception as error:
         logger.exception("could not load user from the database")
-        raise HTTPException(status_code=503, detail="Database unavailable")
+        # The error type (not its message) helps diagnose without leaking details.
+        raise HTTPException(
+            status_code=503, detail=f"Database unavailable ({type(error).__name__})"
+        )
 
     return AuthContext(
         auth_user_id=auth_user_id,
