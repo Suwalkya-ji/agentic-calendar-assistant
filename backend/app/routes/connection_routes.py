@@ -41,7 +41,7 @@ async def connect(
     redirect_url = (
         body["redirectUrl"]
         if isinstance(body.get("redirectUrl"), str)
-        else f"{os.getenv('APP_URL') or 'http://localhost:3000'}/dashboard"
+        else f"{(os.getenv('APP_URL') or 'http://localhost:3000').split(',')[0].strip().rstrip('/')}/dashboard"
     )
 
     try:

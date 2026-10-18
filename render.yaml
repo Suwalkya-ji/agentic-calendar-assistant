@@ -25,6 +25,11 @@ services:
         sync: false
       - key: AI_MODEL
         value: gemini-3.8-flash
+      # Optional: enables the MCP endpoint. SERVER_URL is this service's public URL.
+      - key: SERVER_URL
+        sync: false
+      - key: DESCOPE_MCP_SERVER_WELL_KNOWN_URL
+        sync: false
 
 databases:
   - name: agentic-calendar-db
