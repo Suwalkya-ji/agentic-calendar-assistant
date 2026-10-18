@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -5,6 +6,8 @@ from fastapi import HTTPException, Request
 
 from app.config.descope import descope_client
 from app.repositories.user_repository import ensure_user
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -37,7 +40,11 @@ async def require_session(request: Request) -> AuthContext:
 
     email = claims.get("email") if isinstance(claims.get("email"), str) else None
     name = claims.get("name") if isinstance(claims.get("name"), str) else None
-    user = await ensure_user(auth_user_id, email)
+    try:
+        user = await ensure_user(auth_user_id, email)
+    except Exception:
+        logger.exception("could not load user from the database")
+        raise HTTPException(status_code=503, detail="Database unavailable")
 
     return AuthContext(
         auth_user_id=auth_user_id,

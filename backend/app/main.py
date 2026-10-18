@@ -38,6 +38,39 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Agentic Calendar App", lifespan=lifespan)
 
+
+class CatchUnhandledErrors:
+    """Turn unhandled errors into a JSON 500 *inside* CORS, so browsers see the real
+    error instead of a misleading CORS failure. Added before CORSMiddleware so CORS wraps it."""
+
+    def __init__(self, asgi_app):
+        self.app = asgi_app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        response_started = False
+
+        async def tracking_send(message):
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, tracking_send)
+        except Exception:
+            logger.exception("unhandled error on %s", scope.get("path"))
+            if response_started:
+                raise
+            response = JSONResponse({"error": "Internal server error", "success": False}, status_code=500)
+            await response(scope, receive, send)
+
+
+app.add_middleware(CatchUnhandledErrors)
+
 cors_origins = ["http://localhost:3000"]
 if app_url := os.getenv("APP_URL"):
     for origin in app_url.split(","):
