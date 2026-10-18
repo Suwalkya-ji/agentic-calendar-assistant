@@ -16,3 +16,13 @@ frontend/.env
 
 # Databases & local storage
 *.db
+
+# Next.js & build output
+frontend/.next/
+frontend/out/
+build/
+
+# Logs & temp files
+*.log
+.DS_Store
+Thumbs.db
